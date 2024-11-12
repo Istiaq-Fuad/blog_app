@@ -1,7 +1,7 @@
 class PostModel {
   String id;
   String title;
-  String content;
+  List<dynamic> content;
   String? imageUrl;
   String authorId;
   List<String> likes; // List of user IDs who liked the post
@@ -21,7 +21,7 @@ class PostModel {
     return PostModel(
       id: id,
       title: data['title'] ?? '',
-      content: data['content'] ?? '',
+      content: data['content'] ?? [],
       imageUrl: data['imageUrl'],
       authorId: data['authorId'] ?? '',
       likes: data['likes'] is List
