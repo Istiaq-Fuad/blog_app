@@ -6,6 +6,7 @@ class PostModel {
   String authorId;
   List<String> likes; // List of user IDs who liked the post
   List<Map<String, dynamic>> comments; // List of comments
+  List<String> categories;
 
   PostModel({
     required this.id,
@@ -15,6 +16,7 @@ class PostModel {
     required this.authorId,
     this.likes = const [], // Initialize with an empty list
     this.comments = const [], // Initialize with an empty list
+    this.categories = const [],
   });
 
   factory PostModel.fromFirestore(Map<String, dynamic> data, String id) {
@@ -30,6 +32,9 @@ class PostModel {
       comments: data['comments'] != null
           ? List<Map<String, dynamic>>.from(data['comments'])
           : [],
+      categories: data['categories'] != null
+          ? List<String>.from(data['categories'])
+          : [],
     );
   }
 
@@ -41,6 +46,7 @@ class PostModel {
       'authorId': authorId,
       'likes': likes, // Save as list of user IDs
       'comments': comments,
+      'categories': categories,
     };
   }
 }
