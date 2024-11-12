@@ -14,12 +14,12 @@ class PostDetailPage extends StatefulWidget {
 }
 
 class _PostDetailPageState extends State<PostDetailPage> {
-  TextEditingController _commentController = TextEditingController();
-  TextEditingController _replyController = TextEditingController();
+  final TextEditingController _commentController = TextEditingController();
+  final TextEditingController _replyController = TextEditingController();
   String? replyingToCommentId;
 
   // Cache to store usernames by userId
-  Map<String, String> _usernamesCache = {};
+  final Map<String, String> _usernamesCache = {};
 
   Future<PostModel?> _getPostData() async {
     final doc = await FirebaseFirestore.instance
