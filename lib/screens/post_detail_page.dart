@@ -100,6 +100,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   Widget _buildComment(PostModel post, Map<String, dynamic> comment) {
     final isReplying = replyingToCommentId == comment['userId'];
+
     return FutureBuilder<String>(
       future: _getUsername(comment['userId']),
       builder: (context, snapshot) {
@@ -108,21 +109,65 @@ class _PostDetailPageState extends State<PostDetailPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ListTile(
-              title: Text(comment['text']),
-              subtitle: Text('User: $username'),
-              trailing: TextButton(
-                onPressed: () {
-                  setState(() {
-                    replyingToCommentId = comment['userId'];
-                  });
-                },
-                child: const Text('Reply'),
+            // Comment Box
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 1,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3), // Shadow position
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Username and Comment Text
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        username,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            replyingToCommentId = comment['userId'];
+                          });
+                        },
+                        child: const Text(
+                          'Reply',
+                          style: TextStyle(color: Colors.blueAccent),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    comment['text'],
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
               ),
             ),
+
+            // Display Replies
             if (comment['replies'] != null && comment['replies'].isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(left: 40.0),
+                padding: const EdgeInsets.only(left: 24.0),
                 child: Column(
                   children: comment['replies'].map<Widget>((reply) {
                     return FutureBuilder<String>(
@@ -131,31 +176,70 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         final replyUsername =
                             replySnapshot.data ?? 'Loading...';
 
-                        return ListTile(
-                          title: Text(reply['text']),
-                          subtitle: Text('User: $replyUsername'),
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                replyUsername,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                reply['text'],
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     );
                   }).toList(),
                 ),
               ),
+
+            // Add Reply TextField if Replying
             if (isReplying)
               Padding(
-                padding: const EdgeInsets.only(left: 40.0),
+                padding: const EdgeInsets.only(left: 24.0, top: 8.0),
                 child: Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: _replyController,
-                        decoration:
-                            const InputDecoration(hintText: 'Write a reply...'),
+                        decoration: InputDecoration(
+                          hintText: 'Write a reply...',
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10.0,
+                            horizontal: 10.0,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.send),
+                      icon: const Icon(Icons.send, color: Colors.blueAccent),
                       onPressed: () {
                         addReply(_replyController.text, comment, post);
+                        _replyController
+                            .clear(); // Clear the field after sending
                       },
                     ),
                   ],
