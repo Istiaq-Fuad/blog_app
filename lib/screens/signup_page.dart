@@ -21,6 +21,7 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _roleController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final List<String> _interests = [];
   File? _profileImage;
 
@@ -46,13 +47,16 @@ class _SignupPageState extends State<SignupPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final role = _roleController.text.trim();
+    final username = _usernameController.text.trim();
 
     if (email.isEmpty ||
         password.isEmpty ||
         role.isEmpty ||
-        _interests.isEmpty) {
+        _interests.isEmpty ||
+        username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields and select interests")),
+        const SnackBar(
+            content: Text("Please fill all fields and select interests")),
       );
       return;
     }
@@ -75,6 +79,7 @@ class _SignupPageState extends State<SignupPage> {
         photoUrl: photoUrl,
         interests: _interests,
         role: role,
+        username: username,
       );
 
       await FirebaseFirestore.instance
@@ -134,9 +139,27 @@ class _SignupPageState extends State<SignupPage> {
                     radius: 50,
                     backgroundImage: _profileImage != null
                         ? FileImage(_profileImage!)
-                        : const AssetImage('assets/placeholder.png') as ImageProvider,
+                        : const AssetImage('assets/placeholder.png')
+                            as ImageProvider,
                     backgroundColor: Colors.white,
                   ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _usernameController,
+                  decoration: InputDecoration(
+                    labelText: "Username",
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon:
+                        const Icon(Icons.abc_rounded, color: Colors.white70),
+                  ),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 20),
                 TextField(

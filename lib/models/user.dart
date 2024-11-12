@@ -4,6 +4,7 @@ class UserModel {
   String? photoUrl;
   List<String> interests;
   String role;
+  String username;
 
   UserModel({
     required this.id,
@@ -11,6 +12,7 @@ class UserModel {
     this.photoUrl,
     this.interests = const [],
     this.role = '',
+    this.username = '',
   });
 
   // Convert from Firestore document to UserModel instance
@@ -21,6 +23,7 @@ class UserModel {
       photoUrl: data['photoUrl'],
       interests: List<String>.from(data['interests'] ?? []),
       role: data['role'] ?? '',
+      username: data['username'] ?? '',
     );
   }
 
@@ -31,6 +34,7 @@ class UserModel {
       'photoUrl': photoUrl,
       'interests': interests,
       'role': role,
+      'username': username,
     };
   }
 }
