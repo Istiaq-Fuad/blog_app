@@ -18,6 +18,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
   TextEditingController _replyController = TextEditingController();
   String? replyingToCommentId;
 
+  // Cache to store usernames by userId
+  Map<String, String> _usernamesCache = {};
+
   Future<PostModel?> _getPostData() async {
     final doc = await FirebaseFirestore.instance
         .collection('posts')
@@ -44,6 +47,18 @@ class _PostDetailPageState extends State<PostDetailPage> {
     await FirebaseFirestore.instance.collection('posts').doc(post.id).update({
       'likes': post.likes,
     });
+  }
+
+  // Fetch and cache usernames from Firestore
+  Future<String> _getUsername(String userId) async {
+    if (_usernamesCache.containsKey(userId)) {
+      return _usernamesCache[userId]!;
+    }
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    final username = userDoc.data()?['username'] ?? 'Unknown';
+    _usernamesCache[userId] = username;
+    return username;
   }
 
   Future<void> addComment(String text, PostModel post) async {
@@ -85,56 +100,71 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   Widget _buildComment(PostModel post, Map<String, dynamic> comment) {
     final isReplying = replyingToCommentId == comment['userId'];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ListTile(
-          title: Text(comment['text']),
-          subtitle: Text('User: ${comment['userId']}'),
-          trailing: TextButton(
-            onPressed: () {
-              setState(() {
-                replyingToCommentId = comment['userId'];
-              });
-            },
-            child: const Text('Reply'),
-          ),
-        ),
-        if (comment['replies'] != null && comment['replies'].isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(left: 40.0),
-            child: Column(
-              children: comment['replies'].map<Widget>((reply) {
-                return ListTile(
-                  title: Text(reply['text']),
-                  subtitle: Text('User: ${reply['userId']}'),
-                );
-              }).toList(),
+    return FutureBuilder<String>(
+      future: _getUsername(comment['userId']),
+      builder: (context, snapshot) {
+        final username = snapshot.data ?? 'Loading...';
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              title: Text(comment['text']),
+              subtitle: Text('User: $username'),
+              trailing: TextButton(
+                onPressed: () {
+                  setState(() {
+                    replyingToCommentId = comment['userId'];
+                  });
+                },
+                child: const Text('Reply'),
+              ),
             ),
-          ),
-        if (isReplying)
-          Padding(
-            padding: const EdgeInsets.only(left: 40.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _replyController,
-                    decoration:
-                        const InputDecoration(hintText: 'Write a reply...'),
-                  ),
+            if (comment['replies'] != null && comment['replies'].isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 40.0),
+                child: Column(
+                  children: comment['replies'].map<Widget>((reply) {
+                    return FutureBuilder<String>(
+                      future: _getUsername(reply['userId']),
+                      builder: (context, replySnapshot) {
+                        final replyUsername =
+                            replySnapshot.data ?? 'Loading...';
+
+                        return ListTile(
+                          title: Text(reply['text']),
+                          subtitle: Text('User: $replyUsername'),
+                        );
+                      },
+                    );
+                  }).toList(),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: () {
-                    addReply(_replyController.text, comment, post);
-                  },
+              ),
+            if (isReplying)
+              Padding(
+                padding: const EdgeInsets.only(left: 40.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _replyController,
+                        decoration:
+                            const InputDecoration(hintText: 'Write a reply...'),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: () {
+                        addReply(_replyController.text, comment, post);
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        const Divider(),
-      ],
+              ),
+            const Divider(),
+          ],
+        );
+      },
     );
   }
 
