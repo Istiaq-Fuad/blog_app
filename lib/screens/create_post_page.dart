@@ -14,16 +14,18 @@ class CreatePostPage extends StatefulWidget {
 
 class _CreatePostPageState extends State<CreatePostPage> {
   final _titleController = TextEditingController();
-  final quill.QuillController _contentController =
-      quill.QuillController.basic();
+  final _categoryController = TextEditingController();
+  final quill.QuillController _contentController = quill.QuillController.basic();
+  final List<String> _selectedCategories = [];
   File? _image;
 
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
 
-  // Don't forget to dispose of them
   @override
   void dispose() {
+    _titleController.dispose();
+    _categoryController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -31,8 +33,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? imageFile =
-        await picker.pickImage(source: ImageSource.gallery);
+    final XFile? imageFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (imageFile != null) {
       setState(() {
@@ -45,8 +46,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     if (_image == null) return null;
 
     final storageRef = FirebaseStorage.instance.ref();
-    final imageRef =
-        storageRef.child('posts/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final imageRef = storageRef.child('posts/${DateTime.now().millisecondsSinceEpoch}.jpg');
     await imageRef.putFile(_image!);
     return await imageRef.getDownloadURL();
   }
@@ -55,11 +55,27 @@ class _CreatePostPageState extends State<CreatePostPage> {
     final title = _titleController.text.trim();
     final content = _contentController.document.toDelta().toJson();
 
-    if (title.isEmpty || content.isEmpty) return;
+    if (title.isEmpty || content.isEmpty || _selectedCategories.isEmpty) return;
 
     String? imageUrl = await _uploadImage();
-    await createPost(title, content, imageUrl);
+    await createPost(title, content, imageUrl, _selectedCategories);
     Navigator.pop(context);
+  }
+
+  void _addCategory() {
+    final category = _categoryController.text.trim();
+    if (category.isNotEmpty && !_selectedCategories.contains(category)) {
+      setState(() {
+        _selectedCategories.add(category);
+        _categoryController.clear();
+      });
+    }
+  }
+
+  void _removeCategory(String category) {
+    setState(() {
+      _selectedCategories.remove(category);
+    });
   }
 
   @override
@@ -74,7 +90,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Preview
             GestureDetector(
               onTap: _pickImage,
               child: Container(
@@ -84,20 +99,20 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(10),
                   image: _image != null
-                      ? DecorationImage(
-                          image: FileImage(_image!), fit: BoxFit.cover)
+                      ? DecorationImage(image: FileImage(_image!), fit: BoxFit.cover)
                       : null,
                 ),
                 child: _image == null
                     ? Center(
-                        child: Text("Tap to select an image",
-                            style: TextStyle(
-                                color: Colors.grey[700], fontSize: 16)))
+                        child: Text(
+                          "Tap to select an image",
+                          style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                        ),
+                      )
                     : null,
               ),
             ),
             const SizedBox(height: 20),
-            // Title Input
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
@@ -106,7 +121,32 @@ class _CreatePostPageState extends State<CreatePostPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Rich Text Editor (Quill)
+            TextField(
+              controller: _categoryController,
+              decoration: InputDecoration(
+                labelText: "Add Category",
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.add, color: Colors.blueAccent),
+                  onPressed: _addCategory,
+                ),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8.0,
+              children: _selectedCategories
+                  .map(
+                    (category) => Chip(
+                      label: Text(category),
+                      backgroundColor: Colors.blue[100],
+                      deleteIcon: const Icon(Icons.close, size: 18, color: Colors.blueAccent),
+                      onDeleted: () => _removeCategory(category),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 20),
             Container(
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey),
@@ -135,7 +175,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Post Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -147,8 +186,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text("Post",
-                    style: TextStyle(fontSize: 18, color: Colors.white)),
+                child: const Text("Post", style: TextStyle(fontSize: 18, color: Colors.white)),
               ),
             ),
           ],
