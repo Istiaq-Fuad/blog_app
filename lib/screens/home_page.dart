@@ -2,6 +2,8 @@ import 'package:blog_app/features/auth_service.dart';
 import 'package:blog_app/models/post.dart';
 import 'package:blog_app/screens/create_post_page.dart';
 import 'package:blog_app/screens/login_page.dart';
+import 'package:blog_app/screens/manage_content_page.dart';
+import 'package:blog_app/screens/user_settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'post_detail_page.dart';
@@ -44,15 +46,68 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blueAccent,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreatePostPage()),
-          );
-        },
-        child: const Icon(Icons.add, color: Colors.white),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.article, color: Colors.blueAccent),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ManageContentPage()),
+                  );
+                },
+              ),
+              // ElevatedButton(
+              //   style: ElevatedButton.styleFrom(
+              //     backgroundColor: Colors.blueAccent,
+              //     shape: const CircleBorder(),
+              //     padding: const EdgeInsets.all(12), // Adjusted padding
+              //     minimumSize: const Size(60, 60),
+              //   ),
+              //   onPressed: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(builder: (context) => const CreatePostPage()),
+              //     );
+              //   },
+              //   child: const Icon(Icons.add, color: Colors.white),
+              // ),
+              Container(
+                decoration: const BoxDecoration(
+                  color: Colors.blueAccent, // Background color
+                  shape: BoxShape.circle,
+                ),
+                width: 60, // Width and height to match the minimum size of the original ElevatedButton
+                height: 60,
+                child: IconButton(
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  iconSize: 28, // Adjust icon size as needed
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CreatePostPage()),
+                    );
+                  },
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.person, color: Colors.blueAccent),
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UserSettings()),
+                    );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
       body: Column(
         children: [
