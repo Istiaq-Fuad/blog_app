@@ -169,7 +169,7 @@ class _ManageContentPageState extends State<ManageContentPage> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => EditPostPage(postId: post.id),
+                                        builder: (context) => EditPostPage(postId: post.id, title: post.title, content: post.content, categories: post.categories, imageUrl: post.imageUrl,),
                                       ),
                                     );
                                   },
