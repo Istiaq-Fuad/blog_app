@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-Future<void> createPost(String title, String content, String? imageUrl) async {
+Future<void> createPost(
+    String title, List<dynamic> content, String? imageUrl) async {
   FirebaseFirestore.instance.collection('posts').add({
     'title': title,
     'content': content,
