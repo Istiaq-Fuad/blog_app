@@ -52,7 +52,7 @@ class _SignupPageState extends State<SignupPage> {
         role.isEmpty ||
         _interests.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please fill all fields and select interests")),
+        const SnackBar(content: Text("Please fill all fields and select interests")),
       );
       return;
     }
@@ -88,7 +88,7 @@ class _SignupPageState extends State<SignupPage> {
           (route) => false);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Signup failed. Please try again.")),
+        const SnackBar(content: Text("Signup failed. Please try again.")),
       );
     }
   }
@@ -134,7 +134,7 @@ class _SignupPageState extends State<SignupPage> {
                     radius: 50,
                     backgroundImage: _profileImage != null
                         ? FileImage(_profileImage!)
-                        : AssetImage('assets/placeholder.png') as ImageProvider,
+                        : const AssetImage('assets/placeholder.png') as ImageProvider,
                     backgroundColor: Colors.white,
                   ),
                 ),
@@ -143,49 +143,49 @@ class _SignupPageState extends State<SignupPage> {
                   controller: _emailController,
                   decoration: InputDecoration(
                     labelText: "Email",
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.1),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: Icon(Icons.email, color: Colors.white70),
+                    prefixIcon: const Icon(Icons.email, color: Colors.white70),
                   ),
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: "Password",
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.1),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: Icon(Icons.lock, color: Colors.white70),
+                    prefixIcon: const Icon(Icons.lock, color: Colors.white70),
                   ),
                   obscureText: true,
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _roleController,
                   decoration: InputDecoration(
                     labelText: "Current Role",
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.1),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: Icon(Icons.person, color: Colors.white70),
+                    prefixIcon: const Icon(Icons.person, color: Colors.white70),
                   ),
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 16),
                 const Text(

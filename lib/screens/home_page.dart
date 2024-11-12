@@ -5,6 +5,7 @@ import 'package:blog_app/screens/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'post_detail_page.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -161,7 +162,9 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    post.content,
+                                    // post.content,
+                                    quill.Document.fromJson(post.content)
+                                        .toPlainText(),
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.grey[700],
@@ -184,7 +187,8 @@ class _HomePageState extends State<HomePage> {
                                           const SizedBox(width: 4),
                                           Text(
                                             '${post.likes.length} upvotes',
-                                            style: const TextStyle(fontSize: 16),
+                                            style:
+                                                const TextStyle(fontSize: 16),
                                           ),
                                         ],
                                       ),
@@ -198,7 +202,8 @@ class _HomePageState extends State<HomePage> {
                                           const SizedBox(width: 4),
                                           Text(
                                             '${post.comments.length} comments',
-                                            style: const TextStyle(fontSize: 16),
+                                            style:
+                                                const TextStyle(fontSize: 16),
                                           ),
                                         ],
                                       ),

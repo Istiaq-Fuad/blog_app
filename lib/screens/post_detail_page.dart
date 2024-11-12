@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:blog_app/models/post.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 class PostDetailPage extends StatefulWidget {
   final String postId;
@@ -13,6 +14,10 @@ class PostDetailPage extends StatefulWidget {
 }
 
 class _PostDetailPageState extends State<PostDetailPage> {
+  TextEditingController _commentController = TextEditingController();
+  TextEditingController _replyController = TextEditingController();
+  String? replyingToCommentId;
+
   Future<PostModel?> _getPostData() async {
     final doc = await FirebaseFirestore.instance
         .collection('posts')
@@ -41,6 +46,98 @@ class _PostDetailPageState extends State<PostDetailPage> {
     });
   }
 
+  Future<void> addComment(String text, PostModel post) async {
+    final newComment = {
+      'userId': FirebaseAuth.instance.currentUser!.uid,
+      'text': text,
+      'timestamp': DateTime.now().toIso8601String(),
+      'replies': [],
+    };
+    setState(() {
+      post.comments.add(newComment);
+    });
+
+    await FirebaseFirestore.instance.collection('posts').doc(post.id).update({
+      'comments': post.comments,
+    });
+
+    _commentController.clear();
+  }
+
+  Future<void> addReply(
+      String text, Map<String, dynamic> comment, PostModel post) async {
+    final reply = {
+      'userId': FirebaseAuth.instance.currentUser!.uid,
+      'text': text,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+    setState(() {
+      comment['replies'].add(reply);
+      replyingToCommentId = null;
+    });
+
+    await FirebaseFirestore.instance.collection('posts').doc(post.id).update({
+      'comments': post.comments,
+    });
+
+    _replyController.clear();
+  }
+
+  Widget _buildComment(PostModel post, Map<String, dynamic> comment) {
+    final isReplying = replyingToCommentId == comment['userId'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          title: Text(comment['text']),
+          subtitle: Text('User: ${comment['userId']}'),
+          trailing: TextButton(
+            onPressed: () {
+              setState(() {
+                replyingToCommentId = comment['userId'];
+              });
+            },
+            child: const Text('Reply'),
+          ),
+        ),
+        if (comment['replies'] != null && comment['replies'].isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 40.0),
+            child: Column(
+              children: comment['replies'].map<Widget>((reply) {
+                return ListTile(
+                  title: Text(reply['text']),
+                  subtitle: Text('User: ${reply['userId']}'),
+                );
+              }).toList(),
+            ),
+          ),
+        if (isReplying)
+          Padding(
+            padding: const EdgeInsets.only(left: 40.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _replyController,
+                    decoration:
+                        const InputDecoration(hintText: 'Write a reply...'),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: () {
+                    addReply(_replyController.text, comment, post);
+                  },
+                ),
+              ],
+            ),
+          ),
+        const Divider(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,114 +160,93 @@ class _PostDetailPageState extends State<PostDetailPage> {
           final isLiked = post.likes.contains(userId);
 
           return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (post.imageUrl != null)
-                  Image.network(
-                    post.imageUrl!,
-                    width: double.infinity,
-                    height: 250,
-                    fit: BoxFit.cover,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (post.imageUrl != null)
+                    Image.network(
+                      post.imageUrl!,
+                      width: double.infinity,
+                      height: 250,
+                      fit: BoxFit.cover,
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    post.title,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueAccent,
+                    ),
                   ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 8),
+                  quill.QuillEditor.basic(
+                    controller: quill.QuillController(
+                      document: quill.Document.fromJson(post.content),
+                      selection: const TextSelection.collapsed(offset: 0),
+                      readOnly: true,
+                    ),
+                    configurations: const quill.QuillEditorConfigurations(
+                      autoFocus: false,
+                      showCursor: false,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      Text(
-                        post.title,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                      IconButton(
+                        icon: Icon(
+                          isLiked
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_alt_outlined,
                           color: Colors.blueAccent,
                         ),
+                        onPressed: () => toggleLike(post),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        post.content,
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              isLiked
-                                  ? Icons.thumb_up
-                                  : Icons.thumb_up_alt_outlined,
-                              color: Colors.blueAccent,
-                            ),
-                            onPressed: () => toggleLike(post),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${post.likes.length} upvotes',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(width: 16),
-                          Icon(Icons.comment, color: Colors.grey, size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${post.comments.length} comments',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Divider(color: Colors.grey),
-                      const Text(
-                        "Comments",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // for (var comment in post.comments)
-                      //   Padding(
-                      //     padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      //     child: Row(
-                      //       crossAxisAlignment: CrossAxisAlignment.start,
-                      //       children: [
-                      //         CircleAvatar(
-                      //           backgroundColor: Colors.blueAccent,
-                      //           child: Text(
-                      //             comment.userName[0].toUpperCase(),
-                      //             style: const TextStyle(color: Colors.white),
-                      //           ),
-                      //         ),
-                      //         const SizedBox(width: 10),
-                      //         Expanded(
-                      //           child: Column(
-                      //             crossAxisAlignment: CrossAxisAlignment.start,
-                      //             children: [
-                      //               Text(
-                      //                 comment.userName,
-                      //                 style: const TextStyle(
-                      //                   fontSize: 16,
-                      //                   fontWeight: FontWeight.bold,
-                      //                   color: Colors.blueAccent,
-                      //                 ),
-                      //               ),
-                      //               Text(
-                      //                 comment.content,
-                      //                 style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                      //               ),
-                      //             ],
-                      //           ),
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
+                      Text('${post.likes.length} upvotes'),
+                      const SizedBox(width: 16),
+                      const Icon(Icons.comment, color: Colors.grey),
+                      Text('${post.comments.length} comments'),
                     ],
                   ),
-                ),
-              ],
+                  const Divider(),
+                  const Text(
+                    "Comments",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueAccent,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Render comments
+                  Column(
+                    children: post.comments
+                        .map((comment) => _buildComment(post, comment))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  // Add new comment
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentController,
+                          decoration: const InputDecoration(
+                              hintText: 'Write a comment...'),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        onPressed: () =>
+                            addComment(_commentController.text, post),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         },

@@ -53,7 +53,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   Future<void> _createPost() async {
     final title = _titleController.text.trim();
-    final content = _contentController.document.toPlainText().trim();
+    final content = _contentController.document.toDelta().toJson();
 
     if (title.isEmpty || content.isEmpty) return;
 
