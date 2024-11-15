@@ -1,9 +1,11 @@
 import 'package:blog_app/features/auth_service.dart';
 import 'package:blog_app/models/post.dart';
+import 'package:blog_app/models/user.dart';
 import 'package:blog_app/screens/create_post_page.dart';
 import 'package:blog_app/screens/login_page.dart';
 import 'package:blog_app/screens/manage_content_page.dart';
 import 'package:blog_app/screens/user_settings_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'post_detail_page.dart';
@@ -20,6 +22,41 @@ class _HomePageState extends State<HomePage> {
   final AuthService _auth = AuthService();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+  List<String> _userInterests = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserInterests();
+  }
+
+   Future<void> _fetchUserInterests() async {
+    final interests = await _getUserInterests();
+    setState(() {
+      _userInterests = interests; // Update the user interests in state
+    });
+  }
+
+  Future<List<String>> _getUserInterests() async { 
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      try {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final user = UserModel.fromFirestore(userDoc.data()!, userDoc.id);
+          return user.interests;
+        }
+      } catch (e) {
+        print("Error fetching user interests: $e");
+      }
+    } 
+    return [];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,21 +100,6 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               ),
-              // ElevatedButton(
-              //   style: ElevatedButton.styleFrom(
-              //     backgroundColor: Colors.blueAccent,
-              //     shape: const CircleBorder(),
-              //     padding: const EdgeInsets.all(12), // Adjusted padding
-              //     minimumSize: const Size(60, 60),
-              //   ),
-              //   onPressed: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(builder: (context) => const CreatePostPage()),
-              //     );
-              //   },
-              //   child: const Icon(Icons.add, color: Colors.white),
-              // ),
               Container(
                 decoration: const BoxDecoration(
                   color: Colors.blueAccent, // Background color
@@ -146,7 +168,7 @@ class _HomePageState extends State<HomePage> {
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return const Center(child: Text("No posts available"));
-                }
+                } 
 
                 final posts = snapshot.data!.docs
                     .map((doc) {
@@ -164,8 +186,14 @@ class _HomePageState extends State<HomePage> {
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase());
                     })
-                    .toList();
-
+                    .toList()// Sort posts by the number of matching interests
+                    ..sort((a, b) {
+                      final aMatches = a!.categories.where((category) => _userInterests.contains(category)).length;
+                      final bMatches = b!.categories.where((category) => _userInterests.contains(category)).length;
+                      return bMatches.compareTo(aMatches); // Sort descending by match count
+                    });
+                    
+                    
                 return ListView.builder(
                   itemCount: posts.length,
                   itemBuilder: (context, index) {
