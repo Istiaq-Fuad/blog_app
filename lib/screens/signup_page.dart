@@ -139,9 +139,13 @@ class _SignupPageState extends State<SignupPage> {
                     radius: 50,
                     backgroundImage: _profileImage != null
                         ? FileImage(_profileImage!)
-                        : const AssetImage('assets/placeholder.png')
-                            as ImageProvider,
-                    backgroundColor: Colors.white,
+                        : null,
+                        // : const AssetImage('assets/placeholder.png')
+                        //     as ImageProvider,
+                    child: _profileImage == null
+                      ? Icon(Icons.person, size: 50, color: Colors.grey[400])
+                      : null,
+                    // backgroundColor: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 20),
